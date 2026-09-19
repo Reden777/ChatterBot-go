@@ -1,112 +1,84 @@
-![ChatterBot: Machine learning in Python](https://i.imgur.com/b3SCmGT.png)
+# ChatterBot Go
 
-# ChatterBot
+ChatterBot Go is a small, language-independent conversational engine. It learns
+which statements follow other statements, finds the closest known prompt, and
+chooses a response weighted by how often that response has been observed.
 
-ChatterBot is a machine-learning based conversational dialog engine built in
-Python which makes it possible to generate responses based on collections of
-known conversations. The language independent design of ChatterBot allows it
-to be trained to speak any language.
+This first Go version intentionally focuses on classic ChatterBot behavior.
+Storage and logic adapter systems can be added later; the built-in JSON storage
+is enough to run a persistent chatbot today.
 
-[![Package Version](https://img.shields.io/pypi/v/chatterbot.svg)](https://pypi.python.org/pypi/chatterbot/)
-[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-360/)
-[![Coverage Status](https://img.shields.io/coveralls/gunthercox/ChatterBot.svg)](https://coveralls.io/r/gunthercox/ChatterBot)
-[![Follow on Bluesky](https://img.shields.io/badge/🦋%20Bluesky-1185fe)](https://bsky.app/profile/chatterbot.us)
-[![Join the chat at https://gitter.im/chatterbot/Lobby](https://badges.gitter.im/chatterbot/Lobby.svg)](https://gitter.im/chatterbot/Lobby?utm_source=badge&utm_medium=badge&utm_content=badge)
-<!-- [![Code Climate](https://codeclimate.com/github/gunthercox/ChatterBot/badges/gpa.svg)](https://codeclimate.com/github/gunthercox/ChatterBot) -->
+## Run the terminal chatbot
 
-An example of typical input would be something like this:
+Go 1.23 or newer is required.
 
-> **user:** Good morning! How are you doing?  
-> **bot:**  I am doing very well, thank you for asking.  
-> **user:** You're welcome.  
-> **bot:** Do you like hats?  
-
-## How it works
-
-An untrained instance of ChatterBot starts off with no knowledge of how to communicate. Each time a user enters a statement, the library saves the text that they entered and the text that the statement was in response to. As ChatterBot receives more input the number of responses that it can reply to, and the accuracy of each response in relation to the input statement increases. The program selects the closest matching response by searching for the closest matching known statement that matches the input, it then returns the most likely response to that statement based on how frequently each response is issued by the people the bot communicates with.
-
-# [Documentation](https://docs.chatterbot.us)
-
-View the [documentation](https://docs.chatterbot.us)
-for ChatterBot.
-
-## Installation
-
-This package can be installed from [PyPi](https://pypi.python.org/pypi/ChatterBot) by running:
-
-```bash
-pip install chatterbot
+```sh
+go run ./cmd/chatterbot
 ```
 
-## Basic Usage
+Knowledge is saved to `chatterbot.json`. Use `-db` to choose another file and
+`-name` to change the bot's name:
 
-```python
-from chatterbot import ChatBot
-from chatterbot.trainers import ChatterBotCorpusTrainer
-
-chatbot = ChatBot('Ron Obvious')
-
-# Create a new trainer for the chatbot
-trainer = ChatterBotCorpusTrainer(chatbot)
-
-# Train the chatbot based on the english corpus
-trainer.train("chatterbot.corpus.english")
-
-# Get a response to an input statement
-chatbot.get_response("Hello, how are you today?")
+```sh
+go run ./cmd/chatterbot -name Alice -db data/alice.json
 ```
 
-# Training data
+The bot learns consecutive messages during the conversation. Type `/help` to
+see the available commands, including explicit training:
 
-ChatterBot comes with a data utility module that can be used to train chat bots.
-At the moment there is training data for over a dozen languages in this module.
-Contributions of additional training data or training data
-in other languages would be greatly appreciated. Take a look at the data files
-in the [chatterbot-corpus](https://github.com/gunthercox/chatterbot-corpus)
-package if you are interested in contributing.
-
-```python
-from chatterbot.trainers import ChatterBotCorpusTrainer
-
-# Create a new trainer for the chatbot
-trainer = ChatterBotCorpusTrainer(chatbot)
-
-# Train based on the english corpus
-trainer.train("chatterbot.corpus.english")
-
-# Train based on english greetings corpus
-trainer.train("chatterbot.corpus.english.greetings")
-
-# Train based on the english conversations corpus
-trainer.train("chatterbot.corpus.english.conversations")
+```text
+/teach hello | Hi there!
 ```
 
-**Corpus contributions are welcome! Please make a pull request.**
+Type `/quit` or press Ctrl-D to exit.
 
-# Examples
+## Use as a library
 
-For examples, see the [examples](https://docs.chatterbot.us/examples/)
-section of the documentation.
+```go
+package main
 
-# History
+import (
+	"fmt"
+	"log"
 
-See release notes for changes https://github.com/gunthercox/ChatterBot/releases
+	chatterbot "github.com/Reden777/ChatterBot-go"
+)
 
-# Contributing
+func main() {
+	bot, err := chatterbot.New(
+		"Ron Obvious",
+		chatterbot.WithStorage("knowledge.json"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-Contributions are welcomed, to help ensure a smooth process please start with the contributing guidelines in our documentation:
-https://docs.chatterbot.us/contributing/
+	err = bot.Train([]string{
+		"Good morning! How are you doing?",
+		"I am doing very well, thank you for asking.",
+		"You're welcome.",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
 
-# Sponsors
+	response, err := bot.GetResponse("Good morning, how are you doing?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(response.Text, response.Confidence)
+}
+```
 
-ChatterBot is sponsored by:
+`Train` accepts an ordered conversation and learns every adjacent pair.
+`Learn` adds a single prompt-response pair. `GetResponse` performs fuzzy
+matching and also learns from the current live conversation. All methods on a
+bot are safe to call concurrently.
 
-<p>
-   <a href="https://www.testmuai.com/?utm_source=chatterbot&utm_medium=sponsor" target="_blank">
-      <img src="docs/_static/testmu-ai-white-logo.png" style="vertical-align: middle;" width="250" height="80" />
-   </a>
-</p>
+## Test
 
-# License
+```sh
+go test ./...
+```
 
-ChatterBot is licensed under the [BSD 3-clause license](https://opensource.org/licenses/BSD-3-Clause).
+ChatterBot is licensed under the BSD 3-clause license.
