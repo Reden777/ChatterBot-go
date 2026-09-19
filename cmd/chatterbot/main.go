@@ -15,7 +15,11 @@ func main() {
 	name := flag.String("name", "ChatterBot", "the chatbot's name")
 	database := flag.String("db", "chatterbot.json", "path to the knowledge file")
 	flag.Parse()
-	bot, err := chatterbot.New(*name, chatterbot.WithStorage(*database))
+	bot, err := chatterbot.New(
+		*name,
+		chatterbot.WithStorage(*database),
+		chatterbot.WithMathematicalEvaluation(),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}

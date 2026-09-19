@@ -33,6 +33,7 @@ type Bot struct {
 	lastResponseKnown bool
 	threshold         float64
 	defaultResponses  []string
+	adapters          []LogicAdapter
 }
 
 type learnedResponse struct {
@@ -214,6 +215,11 @@ func (b *Bot) removeFallbackKnowledge() {
 }
 
 func (b *Bot) selectLocked(input string) (Response, bool) {
+	for _, adapter := range b.adapters {
+		if response, ok := adapter.Process(input); ok {
+			return response, true
+		}
+	}
 	inputKey := normalize(input)
 	bestKey := ""
 	bestScore := 0.0

@@ -4,9 +4,8 @@ ChatterBot Go is a small, language-independent conversational engine. It learns
 which statements follow other statements, finds the closest known prompt, and
 chooses a response weighted by how often that response has been observed.
 
-This first Go version intentionally focuses on classic ChatterBot behavior.
-Storage and logic adapter systems can be added later; the built-in JSON storage
-is enough to run a persistent chatbot today.
+This Go version focuses on classic ChatterBot behavior and includes JSON
+storage plus a small logic-adapter API.
 
 ## Run the terminal chatbot
 
@@ -48,6 +47,7 @@ func main() {
 	bot, err := chatterbot.New(
 		"Ron Obvious",
 		chatterbot.WithStorage("knowledge.json"),
+		chatterbot.WithMathematicalEvaluation(),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -74,6 +74,19 @@ func main() {
 `Learn` adds a single prompt-response pair. `GetResponse` performs fuzzy
 matching and also learns from the current live conversation. All methods on a
 bot are safe to call concurrently.
+
+`WithMathematicalEvaluation` enables the math logic adapter. It understands
+both symbols and English expressions, including percentages:
+
+```text
+what is five plus five
+five plus five = 10
+
+what is 5 percent of 104.25
+5 percent of 104.25 = 5.2125
+```
+
+Custom logic adapters can be added with `WithLogicAdapters`.
 
 ## Test
 
